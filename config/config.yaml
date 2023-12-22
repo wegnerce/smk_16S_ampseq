@@ -1,0 +1,18 @@
+rawdata-dir: data
+sample-file: config/samples.tsv
+# adapter.fa needed by bbduk during QC and trimming
+# standard adapters.fa shipped with bbmap
+adapter-file: resources/adapters.fa
+   
+Fastq:
+  suffix_R1: R1
+  suffix_R2: R2
+
+EXTRA:
+  # defined settings for individual tools
+  # bbduk --> adapter filtering
+  # usage example from here: https://jgi.doe.gov/data-and-tools/software-tools/bbtools/bb-tools-user-guide/bbduk-guide/
+  bbduk_adapter: "ktrim=r k=23 mink=11 hdist=1 qtrim=rl trimq=30 tpe tbo"
+  # bbduk --> primer removal
+  # adjust primer sequences as needed, here 341F/785R (Klindworth et al., 2013)
+  bbduk_primer: " literal=CCTACGGGNGGCWGCAG,GACTACHVGGGTATCTAATCC copyundefined k=13 mm=f"

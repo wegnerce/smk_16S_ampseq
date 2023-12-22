@@ -1,0 +1,10 @@
+channels:
+   - conda-forge
+   - bioconda
+dependencies:
+   - r-base=4
+   - r-devtools
+   - bioconductor-dada2=1.28
+   - r-dplyr
+   - bioconductor-phyloseq
+   - bioconductor-biomformat

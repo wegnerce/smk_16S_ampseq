@@ -1,0 +1,76 @@
+###############################################################################
+# @author:      Carl-Eric Wegner
+# @affiliation: Küsel Lab - Aquatic Geomicrobiology
+#              Friedrich Schiller University of Jena
+#
+#              carl-eric.wegner@uni-jena.de
+#              https://github.com/wegnerce
+#              https://www.exploringmicrobes.science
+###############################################################################
+
+###############################################################################
+# needed packages
+###############################################################################
+import pandas as pd
+
+###############################################################################
+# link to config file
+###############################################################################
+configfile: "config/config.yaml"
+
+###############################################################################
+# needed resources
+###############################################################################
+ADAPTER = config["adapter-file"]
+
+###############################################################################
+# relevant parameters input files
+###############################################################################
+r1_suffix = config["Fastq"]["suffix_R1"]
+r2_suffix = config["Fastq"]["suffix_R2"]
+PAIRS = [r1_suffix, r2_suffix]
+
+###############################################################################
+# extra parameters used tools
+###############################################################################
+BBDUK_ADAPTER = config["EXTRA"]["bbduk_adapter"]
+BBDUK_PRIMER = config["EXTRA"]["bbduk_primer"]
+
+###############################################################################
+# read sample names from samples.tsv
+###############################################################################
+SAMPLES = pd.read_table(config["sample-file"], header=0, sep="\t", index_col=0)
+raw_data_dir = config["rawdata-dir"]
+
+###############################################################################
+rule all:
+    input:
+        # 11 | Taxonomic assignments,
+        "results/07_DADA2_TAX_ASSIGN/taxa.RDS",
+        # 10 | Chimera check
+        "results/06_DADA2_CHIMERACHECK/seqTab.nochim.RDS", 
+        # 6 | Dereplicate, denoise, seqtab
+        "results/05_DADA2_SEQTAB/seqTab.RDS",
+        # 5 | Learn errors
+        expand("results/04_DADA2_ERROR_MODELS/model_{orientation}.RDS", 
+               orientation=[1,2]),
+		# 4 | Filter and trim
+        expand("results/03_DADA2_TRIMMED/{sample}.{orientation}.fastq.gz",
+			   sample=SAMPLES.index, orientation = ["1", "2"]),
+        # 3 | Quality profiles
+        expand("results/02_DADA2_QUAL_PROFILES/{sample}-quality-profile.png",
+               sample=SAMPLES.index),
+        # 2a | Adapter and primer removal
+        expand("results/01_TRIMMED/{sample}_stripped_{pair}.fastq",
+               sample=SAMPLES.index, pair = PAIRS),
+        # 1 + 2b | QC before and after trimming and adapter removal
+        expand("logs/fastqc/raw/{sample}_{pair}_fastqc.html",
+               sample=SAMPLES.index, pair=PAIRS),
+        expand("logs/fastqc/trimmed/{sample}_stripped_{pair}_fastqc.html",
+               sample=SAMPLES.index, pair=PAIRS),
+
+###############################################################################
+# needed rules
+###############################################################################
+include: "rules/qc.smk"
+include: "rules/dada2.smk"
